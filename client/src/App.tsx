@@ -448,18 +448,15 @@ const AuthedApp: React.FC<AuthedAppProps> = ({ token, user, onLogout }) => {
   if (isAdminPage) {
     return (
       <ConfirmProvider>
-        <AppShell user={user} currentPath={currentPath} onNavigate={navigateTo} onLogout={onLogout}>
+        <AppShell
+          user={user}
+          currentPath={currentPath}
+          onNavigate={navigateTo}
+          onLogout={onLogout}
+          topbarTitle={appTopbarTitle}
+          topbarContent={appTopbarContent}
+        >
           <div className="app-container admin-page-container">
-            <header className="app-header">
-              <div className="app-title-section">
-                <AppBrandButton onClick={() => navigateTo('/')} />
-              </div>
-              <span className="user-chip">
-                <User size={12} />
-                <strong>{user.username}</strong>
-              </span>
-            </header>
-
             {user.isAdmin ? (
               <AdminDashboard
                 token={token}
@@ -677,6 +674,8 @@ const AppShell: React.FC<AppShellProps> = ({ user, currentPath, onNavigate, topb
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const modeCloseTimerRef = useRef<number | null>(null);
   const adminCloseTimerRef = useRef<number | null>(null);
+  const modeMenuRef = useRef<HTMLDivElement>(null);
+  const adminMenuRef = useRef<HTMLDivElement>(null);
   const isHome = currentPath === '/';
   const isTeam = currentPath === '/team';
   const isHistory = currentPath === '/history';
@@ -701,41 +700,85 @@ const AppShell: React.FC<AppShellProps> = ({ user, currentPath, onNavigate, topb
     onNavigate(path);
   };
 
-  const openModeMenu = () => {
-    if (modeCloseTimerRef.current !== null) {
-      window.clearTimeout(modeCloseTimerRef.current);
-      modeCloseTimerRef.current = null;
-    }
-    setModeMenuOpen(true);
+  const isHoverDevice = () => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia('(hover: hover)').matches;
   };
 
-  const closeModeMenuSoon = () => {
-    if (modeCloseTimerRef.current !== null) {
-      window.clearTimeout(modeCloseTimerRef.current);
+  const handleModeEnter = () => {
+    if (isHoverDevice()) {
+      if (modeCloseTimerRef.current !== null) {
+        window.clearTimeout(modeCloseTimerRef.current);
+        modeCloseTimerRef.current = null;
+      }
+      setModeMenuOpen(true);
     }
-    modeCloseTimerRef.current = window.setTimeout(() => {
-      setModeMenuOpen(false);
-      modeCloseTimerRef.current = null;
-    }, 180);
   };
 
-  const openAdminMenu = () => {
-    if (adminCloseTimerRef.current !== null) {
-      window.clearTimeout(adminCloseTimerRef.current);
-      adminCloseTimerRef.current = null;
+  const handleModeLeave = () => {
+    if (isHoverDevice()) {
+      if (modeCloseTimerRef.current !== null) {
+        window.clearTimeout(modeCloseTimerRef.current);
+      }
+      modeCloseTimerRef.current = window.setTimeout(() => {
+        setModeMenuOpen(false);
+        modeCloseTimerRef.current = null;
+      }, 180);
     }
-    setAdminMenuOpen(true);
   };
 
-  const closeAdminMenuSoon = () => {
-    if (adminCloseTimerRef.current !== null) {
-      window.clearTimeout(adminCloseTimerRef.current);
+  const handleAdminEnter = () => {
+    if (isHoverDevice()) {
+      if (adminCloseTimerRef.current !== null) {
+        window.clearTimeout(adminCloseTimerRef.current);
+        adminCloseTimerRef.current = null;
+      }
+      setAdminMenuOpen(true);
     }
-    adminCloseTimerRef.current = window.setTimeout(() => {
-      setAdminMenuOpen(false);
-      adminCloseTimerRef.current = null;
-    }, 180);
   };
+
+  const handleAdminLeave = () => {
+    if (isHoverDevice()) {
+      if (adminCloseTimerRef.current !== null) {
+        window.clearTimeout(adminCloseTimerRef.current);
+      }
+      adminCloseTimerRef.current = window.setTimeout(() => {
+        setAdminMenuOpen(false);
+        adminCloseTimerRef.current = null;
+      }, 180);
+    }
+  };
+
+  useEffect(() => {
+    if (!modeMenuOpen && !adminMenuOpen) return;
+
+    const handleDocClick = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (modeMenuOpen && modeMenuRef.current && !modeMenuRef.current.contains(target)) {
+        setModeMenuOpen(false);
+      }
+      if (adminMenuOpen && adminMenuRef.current && !adminMenuRef.current.contains(target)) {
+        setAdminMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setModeMenuOpen(false);
+        setAdminMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleDocClick);
+    document.addEventListener('touchstart', handleDocClick);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocClick);
+      document.removeEventListener('touchstart', handleDocClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [modeMenuOpen, adminMenuOpen]);
 
   useEffect(() => {
     return () => {
@@ -755,20 +798,17 @@ const AppShell: React.FC<AppShellProps> = ({ user, currentPath, onNavigate, topb
         <nav className="app-topbar-nav" aria-label="Primary navigation">
           <div
             className="app-topbar-menu"
-            onPointerEnter={openModeMenu}
-            onPointerLeave={closeModeMenuSoon}
-            onBlur={(e) => {
-              const nextFocus = e.relatedTarget;
-              if (!(nextFocus instanceof Node) || !e.currentTarget.contains(nextFocus)) {
-                closeModeMenuSoon();
-              }
-            }}
+            ref={modeMenuRef}
+            onPointerEnter={handleModeEnter}
+            onPointerLeave={handleModeLeave}
           >
             <button
               type="button"
               className={`app-topbar-link ${isMode ? 'active' : ''}`}
-              onClick={() => setModeMenuOpen((v) => !v)}
-              onFocus={openModeMenu}
+              onClick={() => {
+                setModeMenuOpen((v) => !v);
+                setAdminMenuOpen(false);
+              }}
               aria-haspopup="menu"
               aria-expanded={modeMenuOpen}
             >
@@ -781,8 +821,8 @@ const AppShell: React.FC<AppShellProps> = ({ user, currentPath, onNavigate, topb
                 className="app-topbar-dropdown"
                 role="menu"
                 aria-label="Workspace modes"
-                onPointerEnter={openModeMenu}
-                onPointerLeave={closeModeMenuSoon}
+                onPointerEnter={handleModeEnter}
+                onPointerLeave={handleModeLeave}
               >
                 <button
                   type="button"
@@ -816,20 +856,17 @@ const AppShell: React.FC<AppShellProps> = ({ user, currentPath, onNavigate, topb
           {user.isAdmin && (
             <div
               className="app-topbar-menu"
-              onPointerEnter={openAdminMenu}
-              onPointerLeave={closeAdminMenuSoon}
-              onBlur={(e) => {
-                const nextFocus = e.relatedTarget;
-                if (!(nextFocus instanceof Node) || !e.currentTarget.contains(nextFocus)) {
-                  closeAdminMenuSoon();
-                }
-              }}
+              ref={adminMenuRef}
+              onPointerEnter={handleAdminEnter}
+              onPointerLeave={handleAdminLeave}
             >
               <button
                 type="button"
                 className={`app-topbar-link ${isAdmin ? 'active' : ''}`}
-                onClick={() => setAdminMenuOpen((v) => !v)}
-                onFocus={openAdminMenu}
+                onClick={() => {
+                  setAdminMenuOpen((v) => !v);
+                  setModeMenuOpen(false);
+                }}
                 aria-haspopup="menu"
                 aria-expanded={adminMenuOpen}
               >
@@ -842,8 +879,8 @@ const AppShell: React.FC<AppShellProps> = ({ user, currentPath, onNavigate, topb
                   className="app-topbar-dropdown"
                   role="menu"
                   aria-label="Admin sections"
-                  onPointerEnter={openAdminMenu}
-                  onPointerLeave={closeAdminMenuSoon}
+                  onPointerEnter={handleAdminEnter}
+                  onPointerLeave={handleAdminLeave}
                 >
                   <button
                     type="button"

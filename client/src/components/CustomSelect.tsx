@@ -62,7 +62,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   };
 
   return (
-    <div className={`custom-select ${className}`} ref={ref}>
+    <div className={`custom-select ${className} ${open ? 'is-open' : ''}`} ref={ref}>
       <button
         type="button"
         className={`custom-select-trigger ${triggerClassName}`}
