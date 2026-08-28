@@ -432,6 +432,12 @@ const AuthedApp: React.FC<AuthedAppProps> = ({ token, user, onLogout }) => {
             setInputStyle={setInputStyle}
             pttKey={pttKey}
             setPttKey={setPttKey}
+            isAdmin={user.isAdmin}
+            currentPath={currentPath}
+            onNavigate={(path) => {
+              setShowSettings(false);
+              navigateTo(path);
+            }}
             showLeaveRoom={isTeamPage && teamConnected}
             onLeaveRoom={() => {
               setShowSettings(false);
@@ -669,34 +675,22 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
-const AppShell: React.FC<AppShellProps> = ({ user, currentPath, onNavigate, topbarTitle, topbarContent, children }) => {
+const AppShell: React.FC<AppShellProps> = ({ user: _user, currentPath, onNavigate, topbarTitle, topbarContent, children }) => {
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
-  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const modeCloseTimerRef = useRef<number | null>(null);
-  const adminCloseTimerRef = useRef<number | null>(null);
   const modeMenuRef = useRef<HTMLDivElement>(null);
-  const adminMenuRef = useRef<HTMLDivElement>(null);
   const isHome = currentPath === '/';
   const isTeam = currentPath === '/team';
   const isHistory = currentPath === '/history';
   const isMode = isHome || isTeam;
   const activeModeLabel = isTeam ? 'Team' : isHome ? 'Personal' : 'Personal';
-  const isAdmin = currentPath === '/admin' || currentPath.startsWith('/admin/');
-  const isAdminUsers = currentPath === '/admin' || currentPath === '/admin/users';
-  const isAdminAudit = currentPath === '/admin/audit';
-  const isAdminSettings = currentPath === '/admin/settings';
 
   const navigateAndClose = (path: string) => {
     if (modeCloseTimerRef.current !== null) {
       window.clearTimeout(modeCloseTimerRef.current);
       modeCloseTimerRef.current = null;
     }
-    if (adminCloseTimerRef.current !== null) {
-      window.clearTimeout(adminCloseTimerRef.current);
-      adminCloseTimerRef.current = null;
-    }
     setModeMenuOpen(false);
-    setAdminMenuOpen(false);
     onNavigate(path);
   };
 
@@ -727,45 +721,19 @@ const AppShell: React.FC<AppShellProps> = ({ user, currentPath, onNavigate, topb
     }
   };
 
-  const handleAdminEnter = () => {
-    if (isHoverDevice()) {
-      if (adminCloseTimerRef.current !== null) {
-        window.clearTimeout(adminCloseTimerRef.current);
-        adminCloseTimerRef.current = null;
-      }
-      setAdminMenuOpen(true);
-    }
-  };
-
-  const handleAdminLeave = () => {
-    if (isHoverDevice()) {
-      if (adminCloseTimerRef.current !== null) {
-        window.clearTimeout(adminCloseTimerRef.current);
-      }
-      adminCloseTimerRef.current = window.setTimeout(() => {
-        setAdminMenuOpen(false);
-        adminCloseTimerRef.current = null;
-      }, 180);
-    }
-  };
-
   useEffect(() => {
-    if (!modeMenuOpen && !adminMenuOpen) return;
+    if (!modeMenuOpen) return;
 
     const handleDocClick = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node;
       if (modeMenuOpen && modeMenuRef.current && !modeMenuRef.current.contains(target)) {
         setModeMenuOpen(false);
       }
-      if (adminMenuOpen && adminMenuRef.current && !adminMenuRef.current.contains(target)) {
-        setAdminMenuOpen(false);
-      }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setModeMenuOpen(false);
-        setAdminMenuOpen(false);
       }
     };
 
@@ -778,15 +746,12 @@ const AppShell: React.FC<AppShellProps> = ({ user, currentPath, onNavigate, topb
       document.removeEventListener('touchstart', handleDocClick);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [modeMenuOpen, adminMenuOpen]);
+  }, [modeMenuOpen]);
 
   useEffect(() => {
     return () => {
       if (modeCloseTimerRef.current !== null) {
         window.clearTimeout(modeCloseTimerRef.current);
-      }
-      if (adminCloseTimerRef.current !== null) {
-        window.clearTimeout(adminCloseTimerRef.current);
       }
     };
   }, []);
@@ -807,7 +772,6 @@ const AppShell: React.FC<AppShellProps> = ({ user, currentPath, onNavigate, topb
               className={`app-topbar-link ${isMode ? 'active' : ''}`}
               onClick={() => {
                 setModeMenuOpen((v) => !v);
-                setAdminMenuOpen(false);
               }}
               aria-haspopup="menu"
               aria-expanded={modeMenuOpen}
@@ -853,66 +817,6 @@ const AppShell: React.FC<AppShellProps> = ({ user, currentPath, onNavigate, topb
             <History size={16} />
             <span>Lịch sử</span>
           </button>
-          {user.isAdmin && (
-            <div
-              className="app-topbar-menu"
-              ref={adminMenuRef}
-              onPointerEnter={handleAdminEnter}
-              onPointerLeave={handleAdminLeave}
-            >
-              <button
-                type="button"
-                className={`app-topbar-link ${isAdmin ? 'active' : ''}`}
-                onClick={() => {
-                  setAdminMenuOpen((v) => !v);
-                  setModeMenuOpen(false);
-                }}
-                aria-haspopup="menu"
-                aria-expanded={adminMenuOpen}
-              >
-                <ShieldCheck size={16} />
-                <span>Admin</span>
-                <ChevronDown size={14} className={`app-topbar-chevron ${adminMenuOpen ? 'open' : ''}`} />
-              </button>
-              {adminMenuOpen && (
-                <div
-                  className="app-topbar-dropdown"
-                  role="menu"
-                  aria-label="Admin sections"
-                  onPointerEnter={handleAdminEnter}
-                  onPointerLeave={handleAdminLeave}
-                >
-                  <button
-                    type="button"
-                    className={`app-topbar-dropdown-item ${isAdminUsers ? 'active' : ''}`}
-                    onClick={() => navigateAndClose('/admin/users')}
-                    role="menuitem"
-                  >
-                    <Users size={14} />
-                    <span>Users</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`app-topbar-dropdown-item ${isAdminAudit ? 'active' : ''}`}
-                    onClick={() => navigateAndClose('/admin/audit')}
-                    role="menuitem"
-                  >
-                    <ClipboardList size={14} />
-                    <span>Audit</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`app-topbar-dropdown-item ${isAdminSettings ? 'active' : ''}`}
-                    onClick={() => navigateAndClose('/admin/settings')}
-                    role="menuitem"
-                  >
-                    <SettingsIcon size={14} />
-                    <span>Settings</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
         </nav>
         {topbarContent && (
           <div className="app-topbar-extra">
@@ -940,6 +844,9 @@ interface SettingsPopoverProps {
   setInputStyle: (s: InputStyle) => void;
   pttKey: string;
   setPttKey: (k: string) => void;
+  isAdmin?: boolean;
+  currentPath?: string;
+  onNavigate?: (path: string) => void;
   showLeaveRoom?: boolean;
   onLeaveRoom?: () => void;
   onLogout: () => void;
@@ -958,6 +865,9 @@ const SettingsPopover: React.FC<SettingsPopoverProps> = ({
   setInputStyle,
   pttKey,
   setPttKey,
+  isAdmin,
+  currentPath,
+  onNavigate,
   showLeaveRoom,
   onLeaveRoom,
   onLogout,
@@ -1140,6 +1050,45 @@ const SettingsPopover: React.FC<SettingsPopoverProps> = ({
           <div className="settings-divider"></div>
         </>
       )}
+      {isAdmin && onNavigate && (
+        <>
+          <div className="settings-divider"></div>
+          <div className="settings-group">
+            <div className="settings-admin-header">
+              <ShieldCheck size={15} style={{ color: 'var(--color-accent-indigo)' }} />
+              <label className="settings-label" style={{ marginBottom: 0 }}>Quản trị hệ thống</label>
+            </div>
+            <div className="settings-admin-menu">
+              <button
+                type="button"
+                className={`settings-admin-item ${currentPath === '/admin' || currentPath === '/admin/users' ? 'active' : ''}`}
+                onClick={() => onNavigate('/admin/users')}
+              >
+                <Users size={15} />
+                <span>Quản lý Users</span>
+              </button>
+              <button
+                type="button"
+                className={`settings-admin-item ${currentPath === '/admin/audit' ? 'active' : ''}`}
+                onClick={() => onNavigate('/admin/audit')}
+              >
+                <ClipboardList size={15} />
+                <span>Nhật ký Audit</span>
+              </button>
+              <button
+                type="button"
+                className={`settings-admin-item ${currentPath === '/admin/settings' ? 'active' : ''}`}
+                onClick={() => onNavigate('/admin/settings')}
+              >
+                <SettingsIcon size={15} />
+                <span>Cấu hình Admin</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      <div className="settings-divider"></div>
 
       <button className="logout-btn settings-logout" onClick={onLogout}>
         <LogOut size={14} />

@@ -1397,6 +1397,44 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0.1rem 0;
 }
 
+.settings-admin-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.2rem;
+}
+
+.settings-admin-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.settings-admin-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.55rem;
+  background: #0f172a;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.settings-admin-item:hover,
+.settings-admin-item.active {
+  background: #1e2a4a;
+  border-color: rgba(99, 102, 241, 0.45);
+  color: var(--color-text-primary);
+}
+
 .settings-logout {
   width: 100%;
   justify-content: center;
@@ -3008,11 +3046,11 @@ input:checked + .slider:before {
 
   .app-topbar {
     min-height: 3.5rem;
-    padding: 0.45rem 0.65rem;
+    padding: 0.45rem 0.5rem;
     padding-top: max(0.45rem, env(safe-area-inset-top));
-    padding-left: max(0.65rem, env(safe-area-inset-left));
-    padding-right: max(0.65rem, env(safe-area-inset-right));
-    gap: 0.4rem;
+    padding-left: max(0.5rem, env(safe-area-inset-left));
+    padding-right: max(0.5rem, env(safe-area-inset-right));
+    gap: 0.35rem;
     justify-content: space-between;
     align-items: center;
     flex-wrap: nowrap;
@@ -3022,11 +3060,11 @@ input:checked + .slider:before {
     flex-shrink: 0;
   }
   .app-brand-button {
-    gap: 0.35rem;
-    padding: 0.3rem 0.45rem;
+    gap: 0;
+    padding: 0.35rem 0.4rem;
   }
-  .app-title {
-    font-size: 1.05rem;
+  .app-brand-button .app-title {
+    display: none;
   }
   .app-topbar-nav {
     flex: 1 1 auto;
@@ -3040,14 +3078,14 @@ input:checked + .slider:before {
   }
   .app-topbar-link {
     flex: 0 0 auto;
-    padding: 0.36rem 0.5rem;
-    font-size: 0.78rem;
-    gap: 0.25rem;
+    padding: 0.32rem 0.42rem;
+    font-size: 0.76rem;
+    gap: 0.2rem;
     border-radius: 0.45rem;
     white-space: nowrap;
   }
   .app-topbar-link span {
-    font-size: 0.76rem;
+    font-size: 0.75rem;
   }
   .app-topbar-dropdown {
     position: absolute;
@@ -3062,7 +3100,9 @@ input:checked + .slider:before {
   }
   .app-topbar-extra {
     flex: 0 0 auto;
-    gap: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
     padding-left: 0;
     justify-content: flex-end;
     margin-left: auto;
@@ -3071,21 +3111,31 @@ input:checked + .slider:before {
     display: none;
   }
   .topbar-user-chip {
-    padding: 0.2rem 0.45rem;
+    padding: 0.2rem 0.4rem;
     font-size: 0.7rem;
-    max-width: 85px;
+    max-width: 75px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .topbar-user-chip strong {
-    max-width: 55px;
+    max-width: 48px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .topbar-status {
     display: none;
+  }
+  .topbar-icon-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Settings Popover on Mobile */
